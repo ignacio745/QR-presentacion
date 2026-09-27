@@ -67,6 +67,14 @@ def _(qrcode):
                 coords.add((r, c))
         return coords
 
+    def get_version_info_coords():
+        coords = set()
+        for r in range(34, 37):
+            for c in range(6):
+                coords.add((r, c))
+                coords.add((c, r))
+        return coords
+
     def get_timing_pattern_coords():
         coords = set()
         for i in range(8, 17):
@@ -82,7 +90,8 @@ def _(qrcode):
                 coords.add((i, 8))
         for i in range(17, 25):
             coords.add((8, i))
-            coords.add((i, 8))
+            if i != 17:
+                coords.add((i, 8))
         return coords
 
     def get_dark_module_coords():
@@ -238,6 +247,7 @@ def _(qrcode):
         get_qr_matrix,
         get_qr_matrix_with_mask,
         get_timing_pattern_coords,
+        get_version_info_coords,
         get_zigzag_path,
     )
 
@@ -294,17 +304,22 @@ def _(Rectangle, io, plt):
 
 
 @app.cell
-def _(mo):
-    mo.md("""
+def _(get_qr_matrix, mo, render_qr):
+    _url = "https://github.com/ignacio745/QR-presentacion"
+    _matrix = get_qr_matrix(_url, version=3)
+    _img_data = render_qr(_matrix, title="QR del Repositorio")
+    _b64 = __import__('base64').b64encode(_img_data).decode()
+    mo.md(f"""
     # Códigos QR
 
-    ## Una introducción visual
+    ## Ignacio Benemérito
 
     ---
 
-    **Presentación sobre el funcionamiento de los códigos QR**
-
-    [Espacio para código QR de Google Drive]
+    <div style="text-align: center;">
+        <img src="data:image/png;base64,{_b64}" width="300" />
+        <p><a href="{_url}">{_url}</a></p>
+    </div>
     """)
     return
 
@@ -342,7 +357,7 @@ def _(
         else:
             _color_map[(_r, _c)] = 'yellow'
 
-    _img_data = render_qr(_matrix, color_map=_color_map, title="Patrones de Posición y Orientación")
+    _img_data = render_qr(_matrix, color_map=_color_map, title="Patrones de Posición y Alineación")
     mo.image(src=f"data:image/png;base64,{__import__('base64').b64encode(_img_data).decode()}", width=400)
     return
 
@@ -1483,6 +1498,36 @@ def _(get_format_info_positions, get_function_pattern_coords, get_mask_matrix, g
     """
     
     mo.iframe(_html, width="100%", height="1000px")
+    return
+
+
+@app.cell
+def _(get_qr_matrix, get_version_info_coords, mo, render_qr):
+    _matrix = get_qr_matrix("Ignacio Benemerito", version=7)
+    _version_coords = get_version_info_coords()
+    
+    _color_map = {}
+    for _r, _c in _version_coords:
+        if _matrix[_r][_c]:
+            _color_map[(_r, _c)] = 'blue'
+        else:
+            _color_map[(_r, _c)] = 'yellow'
+    
+    _img_colored = render_qr(_matrix, color_map=_color_map, title="Información de Versión Resaltada")
+    
+    _b64_colored = __import__('base64').b64encode(_img_colored).decode()
+    
+    mo.md(f"""
+<div style="display: flex; justify-content: space-around; align-items: flex-start; gap: 20px;">
+    <div style="text-align: center; flex: 0 0 400px;">
+        <img src="data:image/png;base64,{_b64_colored}" width="400" />
+    </div>
+    <div style="text-align: left; flex: 1; font-family: monospace; font-size: 13px; line-height: 1.6;">
+        <h3 style="margin-top: 0;">Información de Versión</h3>
+        <p>Código BCH (18, 6)</p>
+    </div>
+</div>
+    """)
     return
 
 
